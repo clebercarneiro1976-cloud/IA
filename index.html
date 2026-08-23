@@ -1,1 +1,142 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Consultor IA — Prospecção Real</title><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><style>*{box-sizing:border-box}body{margin:0;font-family:system-ui;background:#f4f6f8;color:#17202a}header{background:#122331;color:#fff;padding:18px}.wrap{max-width:1200px;margin:auto;padding:14px}.grid{display:grid;grid-template-columns:310px 1fr;gap:14px}.card{background:#fff;border-radius:16px;padding:16px;box-shadow:0 2px 14px #0001}label{display:block;font-weight:700;margin:10px 0 5px}input,select,button{width:100%;padding:12px;border:1px solid #d6dde2;border-radius:10px;font-size:15px}button{background:#122331;color:#fff;font-weight:800;cursor:pointer;margin-top:8px}.light{background:#fff;color:#122331}.map{height:350px;border-radius:14px;overflow:hidden;margin-bottom:12px}.tabs{display:flex;gap:7px;overflow:auto}.tabs button{white-space:nowrap;margin:0}.status,.muted{color:#65727b;font-size:13px}.lead{border:1px solid #e0e5e8;border-radius:14px;padding:14px;margin:10px 0}.badge{display:inline-block;padding:5px 9px;border-radius:20px;font-size:12px;font-weight:800}.high{background:#def4e4}.mid{background:#fff0c5}.actions{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.actions button{margin:0}.ai{margin-top:10px;padding:12px;border-radius:12px;background:#f1f5f7;border-left:4px solid #122331}.empty{text-align:center;padding:30px;color:#65727b}@media(max-width:800px){.grid{grid-template-columns:1fr}.map{height:280px}.actions{grid-template-columns:1fr 1fr}}</style></head><body><header><div class="wrap"><h1>🤖 Consultor IA</h1><p>Prospecção comercial real para o mercado de acupuntura</p></div></header><main class="wrap"><div class="grid"><section class="card"><h2>🔎 Encontrar clientes</h2><label>Localização</label><input id="city" value="São Paulo, SP" placeholder="Ex.: Campinas, SP"><label>Raio</label><select id="radius"><option value="3000">3 km</option><option value="5000" selected>5 km</option><option value="10000">10 km</option><option value="20000">20 km</option></select><label>Perfil</label><select id="profile"><option value="todos">TODOS</option><option value="acupuncture">Acupuntura</option><option value="clinic">Clínicas</option><option value="doctor">Médicos</option><option value="physio">Fisioterapia</option></select><button onclick="searchReal()">🔎 PESQUISAR CLIENTES REAIS</button><button class="light" onclick="locateMe()">📍 USAR MINHA LOCALIZAÇÃO</button><div class="ai"><b>🧠 IA comercial</b><p class="muted">Pesquisa dados públicos reais e a IA analisa cada lead.</p></div></section><section class="card"><div id="map" class="map"></div><div class="tabs"><button onclick="quick('todos')">TODOS</button><button onclick="quick('acupuncture')">Acupuntura</button><button onclick="quick('clinic')">Clínicas</button><button onclick="quick('doctor')">Médicos</button><button onclick="quick('physio')">Fisio</button></div><div id="status" class="status">Pronto para pesquisar dados reais.</div><div id="results"><div class="empty">Pesquise uma região para localizar potenciais clientes.</div></div></section></div></main><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script>let map=L.map('map').setView([-23.5505,-46.6333],11),markers=[],last=[];L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors'}).addTo(map);function clear(){markers.forEach(m=>m.remove());markers=[]}async function geo(q){let r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(q));let a=await r.json();if(!a.length)throw Error('Localização não encontrada');return[+a[0].lat,+a[0].lon,a[0].display_name]}async function searchReal(){let q=city.value.trim(),rad=+radius.value,fil=profile.value;status.textContent='⏳ Consultando dados públicos reais...';try{let[a,b,c]=await geo(q);map.setView([a,b],rad<=5000?13:12);clear();let query=`[out:json][timeout:30];(nwr["healthcare"="acupuncture"](around:${rad},${a},${b});nwr["healthcare:speciality"~"acupuncture|acupuntura",i](around:${rad},${a},${b});nwr["name"](around:${rad},${a},${b}););out center tags;`,r=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:query});if(!r.ok)throw Error('Pesquisa indisponível');let d=await r.json(),seen=new Set(),arr=d.elements.map(e=>{let t=e.tags||{},p=e.center||e,n=t.name||t.official_name||'';if(!n||seen.has(n.toLowerCase()))return null;seen.add(n.toLowerCase());let z=((t.healthcare||'')+' '+(t['healthcare:speciality']||'')+' '+(t.description||'')).toLowerCase(),type=z.includes('acupunct')||z.includes('acupunt')?'acupuncture':z.includes('clinic')||z.includes('clín')?'clinic':z.includes('doctor')||z.includes('méd')?'doctor':z.includes('physio')||z.includes('fisi')?'physio':'other';if(fil!='todos'&&fil!=type)return null;return{id:e.id,name:n,type,lat:+p.lat,lon:+p.lon,phone:t.phone||t['contact:phone']||'',website:t.website||t['contact:website']||'',addr:t['addr:street']?(t['addr:street']+' '+(t['addr:housenumber']||'')):(t['addr:full']||'')}}).filter(Boolean).slice(0,80);last=arr;render(arr);status.textContent=`${arr.length} potenciais clientes encontrados em ${c}. Dados públicos reais.`}catch(e){status.textContent='Erro: '+e.message}}function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function label(t){return({acupuncture:'Acupuntura',clinic:'Clínica',doctor:'Médico/saúde',physio:'Fisioterapia',other:'Estabelecimento de saúde'})[t]||t}function render(a){clear();if(!a.length){results.innerHTML='<div class="empty">Nenhum estabelecimento encontrado. Aumente o raio ou mude a região.</div>';return}results.innerHTML=a.map((x,i)=>{let pot=x.type=='acupuncture'||x.type=='clinic'?'Alto':'Médio',m=L.marker([x.lat,x.lon]).addTo(map).bindPopup('<b>'+esc(x.name)+'</b><br>'+esc(x.addr||'Endereço não informado'));markers.push(m);return`<article class="lead"><span class="badge ${pot=='Alto'?'high':'mid'}">${pot} potencial inicial</span><h3>${esc(x.name)}</h3><b>${label(x.type)}</b><p>📍 ${esc(x.addr||'Endereço não informado')}<br>${x.phone?'☎️ '+esc(x.phone):'☎️ telefone público não informado'}</p><p class="muted">Fonte: OpenStreetMap. A classificação é uma triagem inicial.</p><div class="actions"><button onclick="ai(${i})">🧠 Analisar com IA</button><button class="light" onclick="go(${i})">🗺️ Mapa</button><button class="light" onclick="contact(${i})">💬 Contato</button><button class="light" onclick="follow(${i})">📅 Follow-up</button></div><div id="extra${i}"></div></article>`}).join('')}async function ai(i){let e=document.getElementById('extra'+i);e.innerHTML='<div class="ai">⏳ IA analisando...</div>';try{let r=await fetch('/api/copilot',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({lead:last[i]})}),d=await r.json();if(!r.ok)throw Error(d.error||'Falha');e.innerHTML='<div class="ai"><b>🧠 Copiloto IA</b><p>'+esc(d.text).replace(/\n/g,'<br>')+'</p></div>'}catch(x){e.innerHTML='<div class="ai"><b>⚠️ IA não configurada</b><p class="muted">Configure OPENAI_API_KEY na hospedagem.</p></div>'}}function go(i){map.setView([last[i].lat,last[i].lon],17);markers[i]?.openPopup()}function contact(i){let x=last[i];if(x.phone){let p=x.phone.replace(/\D/g,'');location.href='https://wa.me/55'+p}else if(x.website)window.open(x.website,'_blank');else alert('Sem contato público cadastrado.')}function follow(i){document.getElementById('extra'+i).innerHTML='<div class="ai"><b>📅 Follow-up</b><p>Revisar este lead em 7 dias.</p></div>'}function quick(v){profile.value=v;searchReal()}function locateMe(){navigator.geolocation.getCurrentPosition(p=>{city.value=p.coords.latitude+','+p.coords.longitude;searchReal()},()=>alert('Permita localização no navegador.'))}</script></body></html>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consultor IA v2 — Prospecção Real</title>
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+  
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <!-- HEADER -->
+  <header>
+    <h1>🧠 Consultor IA v2</h1>
+    <p>Plataforma de Prospecção Real com IA para Acupuntura</p>
+  </header>
+
+  <!-- CONTAINER -->
+  <div class="container">
+    
+    <!-- ABAS -->
+    <div class="tabs">
+      <button class="tab-btn ativo" data-aba="aba-clientes">📋 Clientes</button>
+      <button class="tab-btn" data-aba="aba-mapa">🗺️ Mapa</button>
+      <button class="tab-btn" data-aba="aba-ia">🧠 IA</button>
+      <button class="tab-btn" data-aba="aba-crm">👥 CRM</button>
+      <button class="tab-btn" data-aba="aba-dashboard">📊 Dashboard</button>
+    </div>
+
+    <!-- ABA 1: CLIENTES -->
+    <div id="aba-clientes" class="tab-content ativo">
+      <h2>📋 Lista de Clientes</h2>
+      
+      <div class="filtros">
+        <h3>🔍 Filtros</h3>
+        <div class="filtro-grupo">
+          <div>
+            <label>Tipo de Cliente:</label>
+            <select id="filtro-tipo">
+              <option value="">Todos</option>
+              <option value="clinica">Clínica</option>
+              <option value="acupuntor">Acupuntor</option>
+              <option value="loja">Loja</option>
+            </select>
+          </div>
+          <div>
+            <label>Potencial:</label>
+            <select id="filtro-potencial">
+              <option value="">Todos</option>
+              <option value="alto">🔴 Alto</option>
+              <option value="medio">🟡 Médio</option>
+              <option value="baixo">🟢 Baixo</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div id="lista-clientes" class="lista"></div>
+    </div>
+
+    <!-- ABA 2: MAPA -->
+    <div id="aba-mapa" class="tab-content">
+      <h2>🗺️ Mapa de Clientes</h2>
+      <p style="color: #666; margin-bottom: 1rem;">
+        🔴 = Alto potencial | 🟡 = Médio potencial | 🟢 = Baixo potencial
+      </p>
+      <div id="mapa"></div>
+    </div>
+
+    <!-- ABA 3: IA -->
+    <div id="aba-ia" class="tab-content">
+      <h2>🧠 IA de Prospecção</h2>
+      
+      <div class="grid">
+        <div class="card">
+          <h3>📊 Ranking de Potencial</h3>
+          <p>IA ordena clientes por score de venda</p>
+          <button class="btn btn-primario" onclick="carregarRanking()">Ver Ranking</button>
+        </div>
+        
+        <div class="card">
+          <h3>📅 Próximas Ações</h3>
+          <p>IA sugere quem contatar e como</p>
+          <button class="btn btn-primario" onclick="carregarProximasAcoes()">Ver Ações</button>
+        </div>
+      </div>
+      
+      <div id="resultado-ia"></div>
+    </div>
+
+    <!-- ABA 4: CRM -->
+    <div id="aba-crm" class="tab-content">
+      <h2>👥 CRM - Gestão de Leads</h2>
+      
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+        <button class="btn btn-primario" onclick="listarPorStatus('novo')" style="width: 100%;">🔵 Novos</button>
+        <button class="btn btn-secundario" onclick="listarPorStatus('contatado')" style="width: 100%;">📞 Contatados</button>
+        <button class="btn btn-sucesso" onclick="listarPorStatus('interessado')" style="width: 100%;">👍 Interessados</button>
+        <button class="btn btn-sucesso" onclick="listarPorStatus('proposta')" style="width: 100%;">📝 Propostas</button>
+        <button class="btn btn-sucesso" onclick="listarPorStatus('venda')" style="width: 100%;">✅ Vendas</button>
+        <button class="btn btn-sucesso" onclick="listarPorStatus('follow-up')" style="width: 100%;">📅 Follow-up</button>
+      </div>
+      
+      <div id="resultado-crm"></div>
+    </div>
+
+    <!-- ABA 5: DASHBOARD -->
+    <div id="aba-dashboard" class="tab-content">
+      <h2>📊 Dashboard</h2>
+      <div id="stats" class="stats"></div>
+      
+      <div class="grid">
+        <div class="card">
+          <h3>🎯 Próximas Ações</h3>
+          <button class="btn btn-primario" onclick="mostrarProximasAcoes()">Carregar</button>
+          <div id="proximas-acoes" style="margin-top: 1rem;"></div>
+        </div>
+        
+        <div class="card">
+          <h3>🔍 Buscar por Raio</h3>
+          <div style="margin: 1rem 0;">
+            <label>Raio (km):</label>
+            <input type="number" id="raio" placeholder="5" value="5" min="1" max="50">
+            <button class="btn btn-primario" onclick="buscarPorRaio()" style="margin-top: 0.5rem; width: 100%;">Buscar</button>
+          </div>
+          <div id="resultado-raio" style="margin-top: 1rem;"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  
+  <!-- App JS -->
+  <script src="/js/app.js"></script>
+</body>
+</html>
