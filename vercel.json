@@ -1,1 +1,7 @@
-{"functions":{"api/copilot.js":{"maxDuration":30}},"rewrites":[{"source":"/api/copilot","destination":"/api/copilot.js"}]}
+{
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "public": true
+}

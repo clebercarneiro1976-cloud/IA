@@ -1,0 +1,13 @@
+{
+  "name": "consultor-ia-v2",
+  "version": "2.0.0",
+  "description": "Plataforma de prospecção inteligente para vendedores de acupuntura",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'Build complete'",
+    "start": "node server.js"
+  },
+  "keywords": ["acupuntura", "vendas", "IA", "prospecção"],
+  "author": "Cleber Carneiro",
+  "license": "MIT"
+}
