@@ -1,13 +1,1 @@
-{
-  "name": "consultor-ia-v2",
-  "version": "2.0.0",
-  "description": "Plataforma de prospecção inteligente para vendedores de acupuntura",
-  "scripts": {
-    "dev": "vercel dev",
-    "build": "echo 'Build complete'",
-    "start": "node server.js"
-  },
-  "keywords": ["acupuntura", "vendas", "IA", "prospecção"],
-  "author": "Cleber Carneiro",
-  "license": "MIT"
-}
+{"name":"consultor-ia","version":"2.0.0","private":true,"description":"Consultor IA para prospecção real de clientes de acupuntura","scripts":{"dev":"vercel dev","build":"echo 'Build complete'"},"engines":{"node":"20.x"}}
