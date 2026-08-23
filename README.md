@@ -1,9 +1,10 @@
-# 🧠 Consultor IA V2 — Prospecção Inteligente
+# Consultor IA V2
 
-Plataforma web para prospecção real de clientes do mercado de acupuntura, com pesquisa geográfica, mapa, CRM e análise por IA.
+Prospecção real para vendedores de acupuntura.
 
-### Publicação
-Hospede em Vercel ou plataforma compatível com funções Node.js. Configure `OPENAI_API_KEY` como variável de ambiente. Nunca coloque a chave no GitHub.
+Pesquisa de leads: OpenStreetMap/Overpass.
+Mapa: Leaflet/OpenStreetMap.
+IA: OpenAI via função serverless segura.
+CRM: gestão básica de status.
 
-### Dados reais
-A prospecção usa dados públicos do OpenStreetMap/Overpass. Telefones, e-mails e sites só aparecem quando publicados na fonte. O score de potencial é uma recomendação comercial da IA, não uma garantia de compra.
+Para publicar: Vercel + variável de ambiente `OPENAI_API_KEY`.
