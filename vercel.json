@@ -1,0 +1,1 @@
+{"functions":{"api/copilot.js":{"maxDuration":30}},"rewrites":[{"source":"/api/copilot","destination":"/api/copilot.js"}]}
