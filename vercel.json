@@ -1,7 +1,1 @@
-{
-  "buildCommand": "npm run build",
-  "devCommand": "npm run dev",
-  "installCommand": "npm install",
-  "framework": "nextjs",
-  "public": true
-}
+{"buildCommand":"npm run build","devCommand":"vercel dev","installCommand":"npm install","functions":{"api/*.js":{"runtime":"nodejs20.x"}},"public":true}
